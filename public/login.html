@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - 店铺经营管理系统</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
+    --border: #2e3348; --text: #e4e6f0; --text2: #8b8fa8;
+    --accent: #6c5ce7; --accent2: #a29bfe; --red: #ff6b6b; --green: #00b894;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(108,92,231,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 50%, rgba(0,184,148,0.06) 0%, transparent 50%);
+    animation: bgShift 20s ease-in-out infinite alternate; z-index: 0;
+  }
+  @keyframes bgShift { 0% { transform: translate(0,0); } 100% { transform: translate(-5%,-3%); } }
+  .login-container { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 20px; }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px 36px; box-shadow: 0 8px 40px rgba(0,0,0,0.4); animation: slideUp 0.5s ease-out;
+  }
+  @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  .logo { text-align: center; margin-bottom: 32px; }
+  .logo .icon {
+    width: 64px; height: 64px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(108,92,231,0.3);
+  }
+  .logo h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .logo p { font-size: 14px; color: var(--text2); }
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 8px; }
+  .input-wrap { position: relative; }
+  .input-wrap .icon-left { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; opacity: 0.5; }
+  .form-group input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px 12px 42px; color: var(--text); font-size: 15px; outline: none; transition: all 0.2s;
+  }
+  .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,92,231,0.15); }
+  .form-group input::placeholder { color: var(--text2); opacity: 0.5; }
+  .toggle-pw {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text2); cursor: pointer; font-size: 16px; padding: 4px; opacity: 0.6;
+  }
+  .toggle-pw:hover { opacity: 1; }
+  .remember-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; font-size: 13px; }
+  .remember-row label { display: flex; align-items: center; gap: 8px; color: var(--text2); cursor: pointer; }
+  .remember-row input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+  .btn-login {
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+    font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-login:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(108,92,231,0.35); }
+  .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+  .error-msg {
+    background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.2);
+    border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--red);
+    margin-bottom: 16px; display: none; animation: shake 0.4s ease-in-out;
+  }
+  .error-msg.show { display: block; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .footer-text { text-align: center; margin-top: 24px; font-size: 12px; color: var(--text2); opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="login-container">
+  <div class="login-card">
+    <div class="logo">
+      <div class="icon">📊</div>
+      <h1>店铺经营管理系统</h1>
+      <p>请登录以继续</p>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>用户名</label>
+        <div class="input-wrap">
+          <span class="icon-left">👤</span>
+          <input type="text" id="username" placeholder="请输入用户名" autocomplete="username" autofocus>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <div class="input-wrap">
+          <span class="icon-left">🔒</span>
+          <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password">
+          <button type="button" class="toggle-pw" onclick="togglePassword()">👁️</button>
+        </div>
+      </div>
+      <div class="remember-row">
+        <label><input type="checkbox" id="remember"> 记住我</label>
+      </div>
+      <button type="submit" class="btn-login" id="btnLogin">登 录</button>
+    </form>
+    <div class="footer-text">店铺经营管理系统 v1.0</div>
+  </div>
+</div>
+<script>
+// Already logged in?
+(function() {
+  const auth = localStorage.getItem('shop_auth') || sessionStorage.getItem('shop_auth');
+  if (auth) { try { const u = JSON.parse(auth); if (u.token) { window.location.href = '/index.html'; return; } } catch(e) {} }
+})();
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const remember = document.getElementById('remember').checked;
+  const btn = document.getElementById('btnLogin');
+
+  if (!username || !password) { showError('请输入用户名和密码'); return; }
+
+  btn.disabled = true; btn.textContent = '登录中...';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) { showError(data.error || '登录失败'); btn.disabled = false; btn.textContent = '登 录'; return; }
+
+    const authData = { token: data.token, user: data.user };
+    sessionStorage.setItem('shop_auth', JSON.stringify(authData));
+    if (remember) localStorage.setItem('shop_auth', JSON.stringify(authData));
+
+    btn.textContent = '✅ 登录成功';
+    btn.style.background = 'linear-gradient(135deg, #00b894, #55efc4)';
+    setTimeout(() => { window.location.href = '/index.html'; }, 500);
+  } catch(err) {
+    showError('网络错误，请检查服务器连接');
+    btn.disabled = false; btn.textContent = '登 录';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.className = 'error-msg'; void el.offsetWidth; el.className = 'error-msg show';
+}
+
+function togglePassword() {
+  const input = document.getElementById('password');
+  const btn = document.querySelector('.toggle-pw');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁️'; }
+}
+</script>
+</body>
+</html>

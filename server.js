@@ -276,6 +276,35 @@ app.get('/api/stats/payment', (req, res) => {
   res.json(rows);
 });
 
+
+// ============ DB ADMIN API ============
+app.get('/api/db/tables', (req, res) => {
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all();
+  const result = tables.map(t => {
+    const cols = db.prepare("PRAGMA table_info(" + t.name + ")").all();
+    const rows = db.prepare("SELECT COUNT(*) as c FROM " + t.name).get().c;
+    return { name: t.name, columns: cols.length, rows };
+  });
+  res.json({ tables: result });
+});
+
+app.post('/api/db/query', (req, res) => {
+  const { sql } = req.body;
+  if (!sql) return res.status(400).json({ error: '请输入 SQL 语句' });
+  try {
+    const trimmed = sql.trim().toUpperCase();
+    if (trimmed.startsWith('SELECT') || trimmed.startsWith('PRAGMA') || trimmed.startsWith('EXPLAIN')) {
+      const rows = db.prepare(sql).all();
+      res.json({ rows, count: rows.length });
+    } else {
+      const result = db.prepare(sql).run();
+      res.json({ rows: [], changed: result.changes, message: '执行成功' });
+    }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // ============ SERVE STATIC FILES ============
 app.use(express.static(path.join(__dirname, 'public')));
 
